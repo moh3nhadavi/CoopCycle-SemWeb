@@ -75,6 +75,18 @@ def serialize_graph_and_save(g, file_name):
         f.write(output_text)
     return output_text
 
+def delete_old_data_from_fuseki():
+    sparql_update_query = f'''
+        CLEAR ALL
+    '''
+    # Send the SPARQL Update query to Fuseki
+    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+    response = requests.post(fuseki_update_endpoint, data={"update":sparql_update_query}, headers=headers)
+    if response.status_code == 200:
+        print("Data deleted successfully from Fuseki.")
+    else:
+        print(f"Error: {response.status_code}\n{response.text}")
+
 def publish_graph_to_fuseki(output_text):
     triples_data = '\n'.join(line for line in output_text.split('\n') if not line.startswith('@prefix'))
     sparql_update_query = f'''
@@ -95,4 +107,7 @@ def collect_data():
     data = read_json_file(json_file_name)
     graph = create_graph_from_json(data)
     output_text = serialize_graph_and_save(graph, turtle_file_name)
+    # Temperory: delete old data from Fuseki
+    delete_old_data_from_fuseki()
+    # Publish new data to Fuseki
     publish_graph_to_fuseki(output_text)
