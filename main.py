@@ -36,12 +36,26 @@ for item in data:
     
     # items for some objects
     url = item['url'] if 'url' in item else None
-    
-    
     if url:
         g.add((uri_name, SDO.url, Literal(url)))
+        
+    facebook_url = item['facebook_url'] if 'facebook_url' in item else None
+    if facebook_url:
+        g.add((uri_name, SDO.sameAs, Literal(facebook_url)))
+        
+    twitter_url = item['twitter_url'] if 'twitter_url' in item else None
+    if twitter_url:
+        g.add((uri_name, SDO.sameAs, Literal(twitter_url)))
     
-    
+    coopcycle_url = item['coopcycle_url'] if 'coopcycle_url' in item else None
+    if coopcycle_url:
+        g.add((uri_name, SDO.sameAs, Literal(coopcycle_url)))
+        
+    description = item['text'] if 'text' in item else None
+    if description:
+        for index,item in description.items():
+            g.add((uri_name, SDO.description, Literal(item, lang=index)))
+            
     
 output_text = g.serialize(format='turtle')
 
