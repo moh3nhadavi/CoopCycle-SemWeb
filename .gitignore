@@ -1,3 +1,5 @@
 venv/
 __pycache__/
 *.ttl
+services_to_check.txt
+myNotes.txt
