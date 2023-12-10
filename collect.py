@@ -1,20 +1,13 @@
-import json
 from rdflib import Graph, Literal, BNode, Namespace, RDF, URIRef, XSD, SDO
 import requests
+from global_functions import *
     
-json_file_name = 'coopcycle.json'
 turtle_file_name = 'coopcycle.ttl'
-fuseki_update_endpoint = 'http://localhost:3030/coopcycle/update'
-fuseki_sparql_prefixes = f'''
-    PREFIX schema: <https://schema.org/>
-    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-'''
+# fuseki_update_endpoint = 'http://localhost:3030/coopcycle/update'
+# fuseki_sparql_prefixes = 
 
  
-def read_json_file(file_name):
-    with open(file_name) as json_file:
-        data = json.load(json_file)
-    return data
+
 
 def create_graph_from_json(data):
     # Create a Graph
@@ -87,24 +80,9 @@ def delete_old_data_from_fuseki():
     else:
         print(f"Error: {response.status_code}\n{response.text}")
 
-def publish_graph_to_fuseki(output_text):
-    triples_data = '\n'.join(line for line in output_text.split('\n') if not line.startswith('@prefix'))
-    sparql_update_query = f'''
-        {fuseki_sparql_prefixes}
-        INSERT DATA {{
-            {triples_data}
-        }}
-    '''
-    # Send the SPARQL Update query to Fuseki
-    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
-    response = requests.post(fuseki_update_endpoint, data={"update":sparql_update_query}, headers=headers)
-    if response.status_code == 200:
-        print("Data added successfully to Fuseki.")
-    else:
-        print(f"Error: {response.status_code}\n{response.text}")
 
 def collect_data():
-    data = read_json_file(json_file_name)
+    data = read_json_file(COOPCYCLE_JSON_FILE)
     graph = create_graph_from_json(data)
     output_text = serialize_graph_and_save(graph, turtle_file_name)
     # Temperory: delete old data from Fuseki

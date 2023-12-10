@@ -1,5 +1,9 @@
 venv/
 __pycache__/
 *.ttl
-services_to_check.txt
+
+services_to_check.json
+checked_services.json
+added_restaurants.json
+
 myNotes.txt
