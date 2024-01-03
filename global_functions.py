@@ -6,11 +6,23 @@ SERVICES_TO_CHECK_FILE = 'services_to_check.json'
 ADDED_RESTAURANTS_FILE = 'added_restaurants.json'
 
 FUESKI_UPDATE_ENDPOINT = 'http://localhost:3030/coopcycle/update'
+FUSEKI_QUERY_ENDPOINT = 'http://localhost:3030/coopcycle/query'
 FUSEKI_SPARQL_PREFIXES_PREFIXES = f'''
     PREFIX schema: <https://schema.org/>
     PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 '''
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+    
 def read_json_file(file_name):
     with open(file_name) as json_file:
         data = json.load(json_file)
@@ -38,3 +50,47 @@ def publish_graph_to_fuseki(output_text):
     else:
         print(f"Error: {response.status_code}\n{response.text}")
         
+
+def run_sparql_query(query):
+    # Define the headers for the HTTP request
+    headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json',
+    }
+
+    # Define the parameters for the HTTP request
+    params = {
+        'query': query,
+        'format': 'json',
+    }
+
+    # Send the HTTP request to the Fuseki server
+    try:
+        response = requests.get(FUSEKI_QUERY_ENDPOINT, headers=headers, params=params)
+
+        # Check if the request was successful (status code 200)
+        if response.status_code == 200:
+            print(f"{bcolors.OKGREEN}Data retrieved successfully from Fuseki.{bcolors.ENDC}")
+            # print(response.json())
+            # return response.json()
+            results = response.json()
+            keys = results["head"]["vars"]
+            # # Process and print the results
+            items = []
+            for result in results["results"]["bindings"]:
+                for key in keys:
+                    # print(f"{key}: {result[key]['value']}")
+                    items.append(result[key]['value'])
+                # subject = result["subject"]["value"]
+            #     predicate = result["predicate"]["value"]
+            #     obj = result["object"]["value"]
+            #     print(f"Subject: {subject}, Predicate: {predicate}, Object: {obj}")
+            return items
+
+        else:
+            print(f"{bcolors.FAIL}Error executing SPARQL query. Status code: {response.status_code}{bcolors.ENDC}")
+            print(response.text)
+
+    except Exception as e:
+        print(f"{bcolors.FAIL}Error executing SPARQL query: {e}{bcolors.ENDC}")
+    
