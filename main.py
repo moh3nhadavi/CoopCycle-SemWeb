@@ -3,6 +3,7 @@ import typer
 from rich import print
 from typing import Optional
 from typing_extensions import Annotated
+from datetime import datetime 
     
     
 app = typer.Typer()
@@ -29,9 +30,9 @@ def main(
 @app.command()
 def collect():
     # print(f"{bcolors.OKBLUE}Collecting data...{bcolors.ENDC}")
-    print("[bold green]Collecting data from coopcycle json file ... :boom:[/bold green]")
-    # from collect import collect_data
-    # collect_data()
+    # print("[bold green]Collecting data from coopcycle json file ... :boom:[/bold green]")
+    from collect import collect_data
+    collect_data()
 
 @app.command()
 def crawl():
@@ -40,34 +41,31 @@ def crawl():
     
 @app.command()
 def query(
-        datetime: Annotated[str, typer.Option(help="datetime in iso8601 format like: 2024-01-03T12:30:00")] = None
+        datetime: Annotated[str, typer.Option(help="datetime in iso8601 format like: 2024-01-03T12:30:00")] = datetime.now().strftime("%d-%m-%YT%H:%M:%S"),
+        location: Annotated[str, typer.Option(help="location in Point format like: 2.3522,48.8566 => latitude,longitude")] = None,   
+        max_distance: Annotated[str, typer.Option(help="maximum distance in km like: 10")] = None,
+        price: Annotated[str, typer.Option(help="price in euro like: 10")] = None,
     ):
     from query import run_query
-    if datetime is None:
-        run_query()
+    if datetime is not None and datetime != "None":
+        if location is not None and price is not None:
+            run_query(datetime=datetime, location=location, price=price, max_distance=max_distance)
+        elif location is not None and price is None:
+            run_query(datetime=datetime, location=location, max_distance=max_distance)
+        elif location is None and price is not None:
+            run_query(datetime=datetime, price=price)
+        else:
+            run_query(datetime=datetime)
     else:
-        run_query(datetime=datetime)
+        print(f"[bold red]Error:[/bold red] [red]Please pass datetime at least.[/red]")
+        print(f"[green]You can use help by [bold]--help[/bold] to see more![/green]")
+        
+        
+        
     
     
 
 if __name__ == "__main__":
     app()
-    # if len(sys.argv) == 1:
-    #     print(f"{bcolors.FAIL}Error: Please pass an argument{bcolors.ENDC}")
-    # else:
-    #     if sys.argv[1] == 'collect':
-    #         from collect import collect_data
-    #         collect_data()
-    #     elif sys.argv[1] == 'crawl':
-    #         from crawler import store_data
-    #         store_data()
-    #     elif sys.argv[1] == 'query':
-    #         from query import run_query
-    #         if len(sys.argv) == 3:
-    #             run_query(datetime=sys.argv[2])
-    #         else:
-    #             run_query()
-    #     else:
-    #         print(f"{bcolors.FAIL}Error: Wrong argument{bcolors.ENDC}")
-        
+       
     
