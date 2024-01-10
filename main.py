@@ -28,15 +28,15 @@ def main(
 
 
 @app.command()
-def collect():
+def collect_coopcycle():
     # print(f"{bcolors.OKBLUE}Collecting data...{bcolors.ENDC}")
     # print("[bold green]Collecting data from coopcycle json file ... :boom:[/bold green]")
-    from collect import collect_data
+    from collect_coopcycle import collect_data
     collect_data()
 
 @app.command()
-def crawl():
-    from crawler import store_data
+def collect():
+    from collect import store_data
     store_data()
     
 @app.command()

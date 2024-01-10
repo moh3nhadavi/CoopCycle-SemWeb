@@ -1,91 +1,111 @@
-from rdflib import Graph, Literal, BNode, Namespace, RDF, URIRef, XSD, SDO
 import requests
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin
+import json
 from global_functions import *
+from rdflib import Graph
+
+
+added_restaurants = []
+checked_services = []
+services_to_check = []
+g = Graph()
+
+
+def crawl_and_process_urls(url):
+    try:
+        # Fetch the HTML content of the URL
+        response = requests.get(url)
+        response.raise_for_status()
+
+        # Parse the HTML content using BeautifulSoup
+        soup = BeautifulSoup(response.content, 'html.parser')
+
+        # Find all "a" tags with the property "data-restaurant-path"
+        restaurant_tags = soup.find_all('a', {'data-restaurant-path': True})
+
+        for restaurant_tag in restaurant_tags:
+            # Extract the href value and append it to the original URL
+            restaurant_url = urljoin(url, restaurant_tag['href'])
+        
+            # Fetch the HTML content of the new URL
+            restaurant_response = requests.get(restaurant_url)
+            restaurant_response.raise_for_status()
+
+            # Parse the HTML content of the restaurant page
+            restaurant_soup = BeautifulSoup(restaurant_response.content, 'html.parser')
+
+            # Find the script tag with type "application/ld+json"
+            script_tag = restaurant_soup.find('script', {'type': 'application/ld+json'})
+
+            if script_tag:
+                # Extract the JSON content from the script tag
+                json_data = str(script_tag.string)
+
+                # Run your function on the JSON data
+                process_json_data(json_data, url)
+                
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching or parsing content from {url}: {e}")
+
+def process_json_data(json_data, url):
+    # clean data
+    json_data = json_data.replace("\\r\\n", "\\n")
+    json_data = json.loads(json_data)
     
-turtle_file_name = 'coopcycle.ttl'
-# fuseki_update_endpoint = 'http://localhost:3030/coopcycle/update'
-# fuseki_sparql_prefixes = 
-
- 
-
-
-def create_graph_from_json(data):
-    # Create a Graph
-    g = Graph()
-
-    for item in data:
-        # print(item['country'])
-        # items of every object
-        name = item['name']
-        uri_name = URIRef(name.replace(" ", "_"))
-        latitude = item['latitude']
-        longitude = item['longitude']
-        city = item['city']
-        country = item['country']
-        
-        g.add((uri_name, RDF.type, SDO.ProfessionalService))
-        g.add((uri_name, SDO.name, Literal(name)))
-        
-        b_address = BNode()
-        g.add((uri_name, SDO.address, b_address))
-        g.add((b_address, SDO.addressLocality, Literal(city)))
-        g.add((b_address, SDO.addressCountry, Literal(country)))
-        
-        b_geo = BNode()
-        g.add((uri_name, SDO.geo, b_geo))
-        g.add((b_geo, SDO.latitude, Literal(latitude, datatype=XSD.decimal)))
-        g.add((b_geo, SDO.longitude, Literal(longitude, datatype=XSD.decimal)))
-        
-        
-        
-        # items for some objects
-        url = item['url'] if 'url' in item else None
-        if url:
-            g.add((uri_name, SDO.url, Literal(url)))
+    # clean the subject tag (replace file:// with the base url) 
+    replace_value(json_data, "@id", url)
+    
+    # check the @type is Restaurant
+    if json_data['@type'] == 'http://schema.org/Restaurant':
+        # check if the restaurant is already in the file
+        if json_data['@id'] not in added_restaurants:
+            json_ld_to_rdf(json_data)
+            added_restaurants.append(json_data['@id'])
+            write_json_file(ADDED_RESTAURANTS_FILE, added_restaurants)
             
-        facebook_url = item['facebook_url'] if 'facebook_url' in item else None
-        if facebook_url:
-            g.add((uri_name, SDO.sameAs, Literal(facebook_url)))
-            
-        twitter_url = item['twitter_url'] if 'twitter_url' in item else None
-        if twitter_url:
-            g.add((uri_name, SDO.sameAs, Literal(twitter_url)))
-        
-        coopcycle_url = item['coopcycle_url'] if 'coopcycle_url' in item else None
-        if coopcycle_url:
-            g.add((uri_name, SDO.sameAs, Literal(coopcycle_url)))
-            
-        description = item['text'] if 'text' in item else None
-        if description:
-            for index,item in description.items():
-                g.add((uri_name, SDO.description, Literal(item, lang=index)))
-            
-    return g
 
-def serialize_graph_and_save(g, file_name):
-    output_text = g.serialize(format='turtle')
-    with open(file_name, 'w') as f:
-        f.write(output_text)
-    return output_text
+def replace_value(json_obj, key_to_replace, new_value):
+    if isinstance(json_obj, dict):
+        for key, value in json_obj.items():
+            if key == key_to_replace:
+                json_obj[key] = urljoin(new_value, value)
+            else:
+                replace_value(value, key_to_replace, new_value)
+    elif isinstance(json_obj, list):
+        for item in json_obj:
+            replace_value(item, key_to_replace, new_value)
 
-def delete_old_data_from_fuseki():
-    sparql_update_query = f'''
-        CLEAR ALL
-    '''
-    # Send the SPARQL Update query to Fuseki
-    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
-    response = requests.post(fuseki_update_endpoint, data={"update":sparql_update_query}, headers=headers)
-    if response.status_code == 200:
-        print("Data deleted successfully from Fuseki.")
-    else:
-        print(f"Error: {response.status_code}\n{response.text}")
+def json_ld_to_rdf(json_ld_data):    
+    global g
 
-
-def collect_data():
-    data = read_json_file(COOPCYCLE_JSON_FILE)
-    graph = create_graph_from_json(data)
-    output_text = serialize_graph_and_save(graph, turtle_file_name)
-    # Temperory: delete old data from Fuseki
-    delete_old_data_from_fuseki()
-    # Publish new data to Fuseki
+    g.parse(data=json_ld_data, format="json-ld")
+    output_text = g.serialize(format="turtle")
+    # clean prefix
+    output_text = output_text.replace("schema1", "schema")
     publish_graph_to_fuseki(output_text)
+    
+
+
+
+def store_data():
+    
+    global added_restaurants, checked_services, services_to_check
+    
+    # read json file
+    delivery_services = read_json_file(COOPCYCLE_JSON_FILE)
+    checked_services = read_json_file(CHECKED_SERVICES_FILE)
+    services_to_check = read_json_file(SERVICES_TO_CHECK_FILE)
+    added_restaurants = read_json_file(ADDED_RESTAURANTS_FILE)
+    # for loop in json file
+    for delivery_service in delivery_services:
+        # if service is not checked
+        if delivery_service['name'] in services_to_check and delivery_service['name'] not in checked_services:
+            # crawl
+            crawl_and_process_urls(delivery_service['coopcycle_url'])
+            # finished crawling, add service to checked_services
+            checked_services.append(delivery_service['name'])
+            write_json_file(CHECKED_SERVICES_FILE, checked_services)
+            
+
