@@ -12,9 +12,13 @@ def run_query(**kwargs):
         location = kwargs.get('location')
         price = kwargs.get('price')
         max_distance = kwargs.get('max_distance')
+        rank_by = kwargs.get('rank_by')
+        
+        
         location_select, price_select = "", ""
         price_filter = ""
         location_where, price_where = "", ""
+        order_by = ""
         
         if location:
             latitude, longitude = location.split(',')
@@ -40,19 +44,22 @@ def run_query(**kwargs):
                 FILTER (?price <= {price})
             """
             price_where = f"""
+                ?restaurant schema:potentialAction ?potentialAction.
                 ?potentialAction schema:priceSpecification/schema:priceCurrency "EUR" ;
                          schema:priceSpecification/schema:price ?price.
             """
+            if rank_by == "price":
+                order_by = f"""
+                    ORDER BY ?price
+                """
         
         query = f"""
             {FUSEKI_SPARQL_PREFIXES_PREFIXES}
             SELECT DISTINCT ?restaurant ?name {location_select} {price_select}
             WHERE {{
             ?restaurant a schema:Restaurant;
-                        schema:openingHoursSpecification ?openingHours;
-                        schema:potentialAction ?potentialAction.
+                        schema:openingHoursSpecification ?openingHours.
                         
-
             ?openingHours schema:opens ?opens;
                             schema:closes ?closes;
                             schema:dayOfWeek ?dayOfWeek.
@@ -68,12 +75,15 @@ def run_query(**kwargs):
             {price_filter}
             OPTIONAL {{ ?restaurant schema:name ?name }}
             }}
+            {order_by}
         """
             
         items = run_sparql_query(query)
         
         if location:
             items = filter_by_location(items, float(latitude), float(longitude), max_distance)
+            if rank_by == "distance":
+                items = sort_by_distance(items)
             
                 
         
@@ -157,4 +167,9 @@ def filter_by_location(data, lat2, lon2, max_distance=None):
     # Update bindings with filtered entries
     data["results"]["bindings"] = filtered_data
     
+    return data
+
+def sort_by_distance(data):
+    sorted_entries = sorted(data["results"]["bindings"], key=lambda entry: float(entry["distance"]["value"]))
+    data["results"]["bindings"] = sorted_entries
     return data
