@@ -1,5 +1,6 @@
 from rdflib import Graph, Namespace, RDF, Literal, SDO, URIRef, XSD, BNode
-import questionary
+import questionary, requests
+from rich import print
 
 
     
@@ -69,5 +70,24 @@ def describe_data():
 
     # Serialize and save
     filename = name.replace(" ","_") + "-preference.ttl"
+    output_text = g.serialize(format="turtle")
     with open(filename, 'w', encoding='utf-8') as w:
-        w.write(g.serialize(format="turtle"))
+        w.write(output_text)
+    
+    url = "https://193.49.165.77:3000/semweb/"
+    headers = {
+        "slug": name.replace(" ","_") + "-preference",
+        "Content-Type": "text/turtle"  # Set the appropriate content type based on your requirement
+    }
+
+    # Send the POST request
+    response = requests.post(url, headers=headers, data=output_text)
+
+    # Check the response
+    if response.status_code == 201:
+        print(f"[bold green]User preference successfully uploaded ![/bold green]")
+    else:
+        print(f"[bold red]Error:[/bold] POST request failed with status code: {response.status_code}[/red]")
+        
+        
+    

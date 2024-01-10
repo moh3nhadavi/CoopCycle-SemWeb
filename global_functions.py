@@ -10,6 +10,9 @@ FUSEKI_QUERY_ENDPOINT = 'http://localhost:3030/coopcycle/query'
 FUSEKI_SPARQL_PREFIXES_PREFIXES = f'''
     PREFIX schema: <https://schema.org/>
     PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
+    PREFIX sh: <http://www.w3.org/ns/shacl#>
 '''
 
 class bcolors:
@@ -71,20 +74,7 @@ def run_sparql_query(query):
         # Check if the request was successful (status code 200)
         if response.status_code == 200:
             print(f"{bcolors.OKGREEN}Data retrieved successfully from Fuseki.{bcolors.ENDC}")
-            # results = response.json()
             return response.json()
-            # keys = results["head"]["vars"]
-            # # # Process and print the results
-            # items = []
-            # for result in results["results"]["bindings"]:
-            #     for key in keys:
-            #         # print(f"{key}: {result[key]['value']}")
-            #         items.append(result[key]['value'])
-            #     # subject = result["subject"]["value"]
-            # #     predicate = result["predicate"]["value"]
-            # #     obj = result["object"]["value"]
-            # #     print(f"Subject: {subject}, Predicate: {predicate}, Object: {obj}")
-            # return items
 
         else:
             print(f"{bcolors.FAIL}Error executing SPARQL query. Status code: {response.status_code}{bcolors.ENDC}")

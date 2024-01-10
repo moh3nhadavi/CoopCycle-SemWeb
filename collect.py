@@ -50,6 +50,8 @@ def crawl_and_process_urls(url):
         print(f"Error fetching or parsing content from {url}: {e}")
 
 def process_json_data(json_data, url):
+    global g
+    
     # clean data
     json_data = json_data.replace("\\r\\n", "\\n")
     json_data = json.loads(json_data)
@@ -61,7 +63,7 @@ def process_json_data(json_data, url):
     if json_data['@type'] == 'http://schema.org/Restaurant':
         # check if the restaurant is already in the file
         if json_data['@id'] not in added_restaurants:
-            json_ld_to_rdf(json_data)
+            g.parse(data=json_data, format="json-ld")
             added_restaurants.append(json_data['@id'])
             write_json_file(ADDED_RESTAURANTS_FILE, added_restaurants)
             
@@ -75,16 +77,7 @@ def replace_value(json_obj, key_to_replace, new_value):
                 replace_value(value, key_to_replace, new_value)
     elif isinstance(json_obj, list):
         for item in json_obj:
-            replace_value(item, key_to_replace, new_value)
-
-def json_ld_to_rdf(json_ld_data):    
-    global g
-
-    g.parse(data=json_ld_data, format="json-ld")
-    output_text = g.serialize(format="turtle")
-    # clean prefix
-    output_text = output_text.replace("schema1", "schema")
-    publish_graph_to_fuseki(output_text)
+            replace_value(item, key_to_replace, new_value)    
     
 
 
@@ -107,5 +100,11 @@ def store_data():
             # finished crawling, add service to checked_services
             checked_services.append(delivery_service['name'])
             write_json_file(CHECKED_SERVICES_FILE, checked_services)
+            
+    global g 
+    output_text = g.serialize(format="turtle")
+    # clean prefix
+    output_text = output_text.replace("schema1", "schema")
+    publish_graph_to_fuseki(output_text)
             
 

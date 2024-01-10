@@ -1,9 +1,13 @@
 venv/
 __pycache__/
-*.ttl
+*preference.ttl
+test.ttl
+coopcycle.ttl
 
 services_to_check.json
 checked_services.json
 added_restaurants.json
 
 myNotes.txt
+
+collect-backup.py

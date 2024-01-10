@@ -1,0 +1,107 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix schema: <http://schema.org/> .
+
+schema:RestaurantShape
+    a sh:NodeShape ;
+    sh:targetClass schema:Restaurant ;
+    sh:property [
+        sh:path schema:name ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+    ] ;
+    sh:property [
+        sh:path schema:address ;
+        sh:node schema:PostalAddressShape ;
+    ] ;
+    sh:property [
+        sh:path schema:openingHoursSpecification ;
+        sh:node schema:OpeningHoursShape ;
+    ] ;
+    sh:property [
+        sh:path schema:potentialAction ;
+        sh:node schema:OrderActionShape ;
+    ] .
+
+schema:PostalAddressShape
+    a sh:NodeShape ;
+    sh:targetClass schema:PostalAddress ;
+    sh:property [
+        sh:path schema:geo ;
+        sh:node schema:GeoCoordinatesShape ;
+    ] .
+
+schema:GeoCoordinatesShape
+    a sh:NodeShape ;
+    sh:targetClass schema:GeoCoordinates ;
+    sh:property [
+        sh:path schema:latitude ;
+        sh:datatype xsd:double ;
+        sh:minCount 1 ;
+    ] ;
+    sh:property [
+        sh:path schema:longitude ;
+        sh:datatype xsd:double ;
+        sh:minCount 1 ;
+    ] .
+
+schema:OpeningHoursShape
+    a sh:NodeShape ;
+    sh:targetClass schema:OpeningHoursSpecification ;
+    sh:property [
+        sh:path schema:closes ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+    ] ;
+    sh:property [
+        sh:path schema:dayOfWeek ;
+        sh:datatype xsd:string ;
+        sh:in ("Friday", "Monday", "Saturday", "Sunday", "Thursday", "Tuesday", "Wednesday") ;
+        sh:minCount 1 ;
+    ] ;
+    sh:property [
+        sh:path schema:opens ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+    ] .
+
+schema:OrderActionShape
+    a sh:NodeShape ;
+    sh:targetClass schema:OrderAction ;
+    sh:property [
+        sh:path schema:deliveryMethod ;
+        sh:datatype xsd:anyURI ;
+        sh:minCount 1 ;
+    ] ;
+    sh:property [
+        sh:path schema:priceSpecification ;
+        sh:node schema:DeliveryChargeSpecificationShape ;
+    ] .
+
+schema:DeliveryChargeSpecificationShape
+    a sh:NodeShape ;
+    sh:targetClass schema:DeliveryChargeSpecification ;
+    sh:property [
+        sh:path schema:appliesToDeliveryMethod ;
+        sh:datatype xsd:anyURI ;
+        sh:minCount 1 ;
+    ] ;
+    sh:property [
+        sh:path schema:eligibleTransactionVolume ;
+        sh:node schema:PriceSpecificationShape ;
+    ] .
+
+schema:PriceSpecificationShape
+    a sh:NodeShape ;
+    sh:targetClass schema:PriceSpecification ;
+    sh:property [
+        sh:path schema:price ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+    ] ;
+    sh:property [
+        sh:path schema:priceCurrency ;
+        sh:datatype xsd:string ;
+        sh:minCount 1 ;
+    ] .
