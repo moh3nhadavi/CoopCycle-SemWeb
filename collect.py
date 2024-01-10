@@ -4,6 +4,7 @@ from urllib.parse import urljoin
 import json
 from global_functions import *
 from rdflib import Graph
+from pyshacl import validate
 
 
 added_restaurants = []
@@ -60,13 +61,25 @@ def process_json_data(json_data, url):
     replace_value(json_data, "@id", url)
     
     # check the @type is Restaurant
-    if json_data['@type'] == 'http://schema.org/Restaurant':
-        # check if the restaurant is already in the file
-        if json_data['@id'] not in added_restaurants:
-            g.parse(data=json_data, format="json-ld")
-            added_restaurants.append(json_data['@id'])
-            write_json_file(ADDED_RESTAURANTS_FILE, added_restaurants)
+    if json_data['@id'] not in added_restaurants and check_validation(json_data):
+        # add triples to graph
+        g.parse(data=json_data, format="json-ld")
+        added_restaurants.append(json_data['@id'])
+        write_json_file(ADDED_RESTAURANTS_FILE, added_restaurants)
             
+
+def check_validation(json_data):
+    shacl = Graph().parse('shacl.ttl', format='turtle')
+    g_temp = Graph()
+    g_temp.parse(data=json_data, format="json-ld")
+    valid, results_graph, results_text = validate(
+        g_temp.serialize(format="turtle"), shacl_graph=shacl)
+    if valid:
+        return True
+    else:
+        return False
+    
+    
 
 def replace_value(json_obj, key_to_replace, new_value):
     if isinstance(json_obj, dict):
