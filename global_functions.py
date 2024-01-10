@@ -71,21 +71,20 @@ def run_sparql_query(query):
         # Check if the request was successful (status code 200)
         if response.status_code == 200:
             print(f"{bcolors.OKGREEN}Data retrieved successfully from Fuseki.{bcolors.ENDC}")
-            # print(response.json())
-            # return response.json()
-            results = response.json()
-            keys = results["head"]["vars"]
-            # # Process and print the results
-            items = []
-            for result in results["results"]["bindings"]:
-                for key in keys:
-                    # print(f"{key}: {result[key]['value']}")
-                    items.append(result[key]['value'])
-                # subject = result["subject"]["value"]
-            #     predicate = result["predicate"]["value"]
-            #     obj = result["object"]["value"]
-            #     print(f"Subject: {subject}, Predicate: {predicate}, Object: {obj}")
-            return items
+            # results = response.json()
+            return response.json()
+            # keys = results["head"]["vars"]
+            # # # Process and print the results
+            # items = []
+            # for result in results["results"]["bindings"]:
+            #     for key in keys:
+            #         # print(f"{key}: {result[key]['value']}")
+            #         items.append(result[key]['value'])
+            #     # subject = result["subject"]["value"]
+            # #     predicate = result["predicate"]["value"]
+            # #     obj = result["object"]["value"]
+            # #     print(f"Subject: {subject}, Predicate: {predicate}, Object: {obj}")
+            # return items
 
         else:
             print(f"{bcolors.FAIL}Error executing SPARQL query. Status code: {response.status_code}{bcolors.ENDC}")

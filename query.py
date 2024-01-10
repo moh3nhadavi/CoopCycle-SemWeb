@@ -1,12 +1,15 @@
 from datetime import datetime
 from global_functions import *
+from rich import print_json
+from rich.table import Table
+from rich.console import Console
 
 def run_query(**kwargs):
     if kwargs.get('datetime'):
         day_of_week, time_24_hours = convert_iso8601_to_day_time(kwargs.get('datetime'))
         query = f"""
             {FUSEKI_SPARQL_PREFIXES_PREFIXES}
-            SELECT DISTINCT ?name
+            SELECT DISTINCT ?restaurant ?name
             WHERE {{
             ?restaurant a schema:Restaurant;
                         schema:openingHoursSpecification ?openingHours.
@@ -23,10 +26,26 @@ def run_query(**kwargs):
             }}
         """
         items = run_sparql_query(query)
-        print(f"{bcolors.BOLD}Restaurants open at {kwargs.get('datetime')}: {bcolors.ENDC}")
-        print(f"{bcolors.OKBLUE}{items}{bcolors.ENDC}")
-        print(f"{bcolors.UNDERLINE}{bcolors.HEADER}Total: {len(items)}{bcolors.ENDC}")
-        # print(len(items))
+        # Process and print the results
+        table = Table(show_header=True, header_style="bold magenta",title=f"Restaurants open at {kwargs.get('datetime')}")
+        # add columns
+        keys = items["head"]["vars"]
+        for key in keys:
+            table.add_column(key)
+            
+        # add rows
+        for result in items["results"]["bindings"]:
+            row = []
+            for key in keys:
+                row.append(result[key]['value'])
+            table.add_row(*row)
+        
+        # print table
+        console = Console()
+        console.print(table)
+        
+        print(f"{bcolors.UNDERLINE}{bcolors.HEADER}Total: {len(items['results']['bindings'])}{bcolors.ENDC}")
+        
     else:
         print(f"{bcolors.FAIL}Error: Please pass an argument at least{bcolors.ENDC}")
         return None
