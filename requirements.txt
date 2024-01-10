@@ -2,3 +2,4 @@ rdflib
 typer[all]
 rich
 geopy
+questionary

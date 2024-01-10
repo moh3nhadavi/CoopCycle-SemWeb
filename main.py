@@ -66,7 +66,10 @@ def query(
         print(f"[green]You can use help by [bold]--help[/bold] to see more![/green]")
         
         
-        
+@app.command()
+def describe():
+    from describe import describe_data
+    describe_data()
     
     
 
