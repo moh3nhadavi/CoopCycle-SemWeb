@@ -13,7 +13,7 @@ def run_query(**kwargs):
         price = kwargs.get('price')
         max_distance = kwargs.get('max_distance')
         location_select, price_select = "", ""
-        max_distance_filter, price_filter = "",""
+        price_filter = ""
         location_where, price_where = "", ""
         
         if location:
@@ -32,25 +32,40 @@ def run_query(**kwargs):
                             schema:longitude ?longitude.
             """
         
+        if price:
+            price_select = f"""
+                ?price
+            """
+            price_filter = f"""
+                FILTER (?price <= {price})
+            """
+            price_where = f"""
+                ?potentialAction schema:priceSpecification/schema:priceCurrency "EUR" ;
+                         schema:priceSpecification/schema:price ?price.
+            """
         
         query = f"""
             {FUSEKI_SPARQL_PREFIXES_PREFIXES}
-            SELECT DISTINCT ?restaurant ?name {location_select}
+            SELECT DISTINCT ?restaurant ?name {location_select} {price_select}
             WHERE {{
             ?restaurant a schema:Restaurant;
-                        schema:openingHoursSpecification ?openingHours.
+                        schema:openingHoursSpecification ?openingHours;
+                        schema:potentialAction ?potentialAction.
+                        
 
             ?openingHours schema:opens ?opens;
                             schema:closes ?closes;
                             schema:dayOfWeek ?dayOfWeek.
             
             {location_where}
+            {price_where}
             
             FILTER (
                 ?dayOfWeek = "{day_of_week}" &&
                 ?opens <= "{time_24_hours}" &&
                 ?closes >= "{time_24_hours}"
             )
+            {price_filter}
             OPTIONAL {{ ?restaurant schema:name ?name }}
             }}
         """
