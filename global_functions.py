@@ -5,8 +5,10 @@ CHECKED_SERVICES_FILE = 'checked_services.json'
 SERVICES_TO_CHECK_FILE = 'services_to_check.json'
 ADDED_RESTAURANTS_FILE = 'added_restaurants.json'
 
-FUESKI_UPDATE_ENDPOINT = 'http://localhost:3030/coopcycle/update'
-FUSEKI_QUERY_ENDPOINT = 'http://localhost:3030/coopcycle/query'
+# FUESKI_UPDATE_ENDPOINT = 'http://localhost:3030/coopcycle/update'
+FUESKI_UPDATE_ENDPOINT = 'http://localhost:3030/coop/update'
+# FUSEKI_QUERY_ENDPOINT = 'http://localhost:3030/coopcycle/query'
+FUSEKI_QUERY_ENDPOINT = 'http://localhost:3030/coop/query'
 FUSEKI_SPARQL_PREFIXES_PREFIXES = f'''
     PREFIX schema: <https://schema.org/>
     PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>

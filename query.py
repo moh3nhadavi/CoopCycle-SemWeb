@@ -41,7 +41,7 @@ def run_query(**kwargs):
                 ?price
             """
             price_filter = f"""
-                FILTER (?price <= {price})
+                FILTER (xsd:double(?price) <= {price})
             """
             price_where = f"""
                 ?restaurant schema:potentialAction ?potentialAction.

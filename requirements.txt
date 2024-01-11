@@ -1,4 +1,5 @@
 rdflib
+bs4
 typer[all]
 rich
 geopy

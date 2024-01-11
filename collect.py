@@ -42,9 +42,9 @@ def crawl_and_process_urls(url):
             if script_tag:
                 # Extract the JSON content from the script tag
                 json_data = str(script_tag.string)
-
+                if "nsfnvmsfvnsgfbvn" not in json_data:
                 # Run your function on the JSON data
-                process_json_data(json_data, url)
+                    process_json_data(json_data, url)
                 
 
     except requests.exceptions.RequestException as e:
@@ -61,11 +61,13 @@ def process_json_data(json_data, url):
     replace_value(json_data, "@id", url)
     
     # check the @type is Restaurant
-    if json_data['@id'] not in added_restaurants and check_validation(json_data):
+    if json_data['@id'] not in added_restaurants and json_data['@type'] == 'http://schema.org/Restaurant':
         # add triples to graph
         g.parse(data=json_data, format="json-ld")
         added_restaurants.append(json_data['@id'])
         write_json_file(ADDED_RESTAURANTS_FILE, added_restaurants)
+        # print("added restaurant: ")
+        print(json_data['@id'])
             
 
 def check_validation(json_data):
@@ -77,6 +79,8 @@ def check_validation(json_data):
     if valid:
         return True
     else:
+        print("shacl validation error: ")
+        print(results_text)
         return False
     
     

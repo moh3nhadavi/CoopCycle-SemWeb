@@ -74,7 +74,7 @@ def describe_data():
     with open(filename, 'w', encoding='utf-8') as w:
         w.write(output_text)
     
-    url = "https://193.49.165.77:3000/semweb/"
+    url = "http://193.49.165.77:3000/semweb/"
     headers = {
         "slug": name.replace(" ","_") + "-preference",
         "Content-Type": "text/turtle"  # Set the appropriate content type based on your requirement
